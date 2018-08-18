@@ -2,7 +2,6 @@ package com.contxt.kinesis
 
 import com.amazonaws.services.kinesis.producer.{ KinesisProducer, KinesisProducerConfiguration, UserRecordResult }
 import com.google.common.util.concurrent.ListenableFuture
-import com.typesafe.config.{ Config, ConfigFactory }
 import java.nio.ByteBuffer
 import scala.concurrent._
 import scala.language.implicitConversions
@@ -12,13 +11,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 /** A lightweight Scala wrapper around Kinesis Producer Library (KPL). */
 trait ScalaKinesisProducer {
-
-  def streamId: StreamId
-
   /** Sends a record to a stream. See
     * [[[com.amazonaws.services.kinesis.producer.KinesisProducer.addUserRecord(String, String, String, ByteBuffer):ListenableFuture[UserRecordResult]*]]].
     */
-  def send(partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String] = None): Future[UserRecordResult]
+  def send(streamName: String, partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String] = None): Future[UserRecordResult]
 
   /** Performs an orderly shutdown, waiting for all the outgoing messages before destroying the underlying producer. */
   def shutdown(): Future[Unit]
@@ -26,22 +22,9 @@ trait ScalaKinesisProducer {
 
 object ScalaKinesisProducer {
   def apply(
-    streamName: String,
-    kplConfig: KinesisProducerConfiguration,
-    config: Config = ConfigFactory.load()
-  ): ScalaKinesisProducer = {
-    val producerStats = ProducerStats.getInstance(config)
-    ScalaKinesisProducer(streamName, kplConfig, producerStats)
-  }
-
-  def apply(
-    streamName: String,
-    kplConfig: KinesisProducerConfiguration,
-    producerStats: ProducerStats
-  ): ScalaKinesisProducer = {
-    val streamId = StreamId(kplConfig.getRegion, streamName)
+    kplConfig: KinesisProducerConfiguration): ScalaKinesisProducer = {
     val producer = new KinesisProducer(kplConfig)
-    new ScalaKinesisProducerImpl(streamId, producer, producerStats)
+    new ScalaKinesisProducerImpl(producer)
   }
 
   private[kinesis] implicit def listenableToScalaFuture[A](listenable: ListenableFuture[A]): Future[A] = {
@@ -54,22 +37,12 @@ object ScalaKinesisProducer {
   }
 }
 
-private[kinesis] class ScalaKinesisProducerImpl(
-  val streamId: StreamId,
-  private val producer: KinesisProducer,
-  private val stats: ProducerStats
-) extends ScalaKinesisProducer {
+private[kinesis] class ScalaKinesisProducerImpl(private val producer: KinesisProducer) extends ScalaKinesisProducer {
   import ScalaKinesisProducer.listenableToScalaFuture
 
-  stats.reportInitialization(streamId)
-
-  def send(partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String]): Future[UserRecordResult] = {
-    stats.trackSend(streamId, data.remaining) {
-      producer.addUserRecord(streamId.streamName, partitionKey, explicitHashKey.orNull, data).map { result =>
-        if (!result.isSuccessful) throwSendFailedException(result) else result
-      }
-    }
-  }
+  def send(streamName: String, partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String]): Future[UserRecordResult] =
+    producer.addUserRecord(streamName, partitionKey, explicitHashKey.orNull, data).map { result =>
+      if (!result.isSuccessful) throwSendFailedException(result) else result }
 
   def shutdown(): Future[Unit] = shutdownOnce
 
@@ -79,16 +52,16 @@ private[kinesis] class ScalaKinesisProducerImpl(
     allFlushedFuture.onComplete { _ =>
       shutdownPromise.completeWith(destroyProducer())
     }
-    val combinedFuture = allFlushedFuture.zip(shutdownPromise.future).map(_ => ())
-    combinedFuture.onComplete(_ => stats.reportShutdown(streamId))
-    combinedFuture
+    allFlushedFuture
+      .zip(shutdownPromise.future)
+      .map(_ => ())
   }
 
   private def throwSendFailedException(result: UserRecordResult): Nothing = {
     val attemptCount = result.getAttempts.size
     val errorMessage = result.getAttempts.lastOption.map(_.getErrorMessage)
     throw new RuntimeException(
-      s"Sending a record to $streamId failed after $attemptCount attempts, last error message: $errorMessage."
+      s"Sending a record failed after $attemptCount attempts, last error message: $errorMessage."
     )
   }
 
