@@ -1,83 +1,63 @@
 package com.contxt.kinesis
 
-import com.amazonaws.services.kinesis.producer.{ KinesisProducer, KinesisProducerConfiguration, UserRecordResult }
-import com.google.common.util.concurrent.ListenableFuture
 import java.nio.ByteBuffer
-import scala.concurrent._
-import scala.language.implicitConversions
-import scala.util.Try
-import scala.collection.JavaConversions._
-import scala.concurrent.ExecutionContext.Implicits.global
 
-/** A lightweight Scala wrapper around Kinesis Producer Library (KPL). */
-trait ScalaKinesisProducer {
+import cats.Monad
+import cats.effect._
+import cats.syntax.all._
+import com.amazonaws.services.kinesis.producer.{KinesisProducer, KinesisProducerConfiguration, UserRecordResult}
+import com.google.common.util.concurrent.{FutureCallback, Futures}
+
+import scala.collection.JavaConversions._
+import scala.language.{higherKinds, implicitConversions}
+
+// Algebra
+trait ScalaKinesisProducer[F[_]] {
   /** Sends a record to a stream. See
     * [[[com.amazonaws.services.kinesis.producer.KinesisProducer.addUserRecord(String, String, String, ByteBuffer):ListenableFuture[UserRecordResult]*]]].
     */
-  def send(streamName: String, partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String] = None): Future[UserRecordResult]
+  def send(streamName: String, partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String] = None): F[UserRecordResult]
 
   /** Performs an orderly shutdown, waiting for all the outgoing messages before destroying the underlying producer. */
-  def shutdown(): Future[Unit]
+  def shutdown(): F[Unit]
 }
 
 object ScalaKinesisProducer {
-  def apply(
-    kplConfig: KinesisProducerConfiguration): ScalaKinesisProducer = {
-    val producer = new KinesisProducer(kplConfig)
-    new ScalaKinesisProducerImpl(producer)
-  }
-
-  private[kinesis] implicit def listenableToScalaFuture[A](listenable: ListenableFuture[A]): Future[A] = {
-    val promise = Promise[A]
-    val callback = new Runnable {
-      override def run(): Unit = promise.tryComplete(Try(listenable.get()))
-    }
-    listenable.addListener(callback, ExecutionContext.global)
-    promise.future
+  def apply[F[_]: Async: Monad](kplConfig: KinesisProducerConfiguration): F[ScalaKinesisProducer[F]] = Async[F].delay {
+    val producer = new KinesisProducer(kplConfig) // this side-effects
+    new ScalaKinesisProducerImpl[F](producer)
   }
 }
 
-private[kinesis] class ScalaKinesisProducerImpl(private val producer: KinesisProducer) extends ScalaKinesisProducer {
-  import ScalaKinesisProducer.listenableToScalaFuture
+// Interpreter
+private[kinesis] class ScalaKinesisProducerImpl[F[_]: Async: Monad](private val producer: KinesisProducer) extends ScalaKinesisProducer[F] {
+  def send(streamName: String, partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String]): F[UserRecordResult] =
+    Async[F].async { callback =>
+      val listenableFuture = producer.addUserRecord(streamName, partitionKey, explicitHashKey.orNull, data)
+        Futures.addCallback(listenableFuture, new FutureCallback[UserRecordResult] {
+          override def onSuccess(result: UserRecordResult): Unit =
+            if (result.isSuccessful) callback(Right(result)) else callback(Left(sendFailedException(result)))
 
-  def send(streamName: String, partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String]): Future[UserRecordResult] =
-    producer.addUserRecord(streamName, partitionKey, explicitHashKey.orNull, data).map { result =>
-      if (!result.isSuccessful) throwSendFailedException(result) else result }
-
-  def shutdown(): Future[Unit] = shutdownOnce
-
-  private lazy val shutdownOnce: Future[Unit] = {
-    val allFlushedFuture = flushAll()
-    val shutdownPromise = Promise[Unit]
-    allFlushedFuture.onComplete { _ =>
-      shutdownPromise.completeWith(destroyProducer())
+          override def onFailure(t: Throwable): Unit = callback(Left(t))
+        })
     }
-    allFlushedFuture
-      .zip(shutdownPromise.future)
-      .map(_ => ())
-  }
 
-  private def throwSendFailedException(result: UserRecordResult): Nothing = {
+  def shutdown(): F[Unit] = shutdownOnce
+
+  private lazy val shutdownOnce: F[Unit] = for {
+    _ <- flushAll()
+    _ <- destroyProducer()
+  } yield ()
+
+  private def sendFailedException(result: UserRecordResult): RuntimeException = {
     val attemptCount = result.getAttempts.size
     val errorMessage = result.getAttempts.lastOption.map(_.getErrorMessage)
-    throw new RuntimeException(
+    new RuntimeException(
       s"Sending a record failed after $attemptCount attempts, last error message: $errorMessage."
     )
   }
 
-  private def flushAll(): Future[Unit] = {
-    Future {
-      blocking {
-        producer.flushSync()
-      }
-    }
-  }
+  private def flushAll(): F[Unit] = Async[F].delay(producer.flushSync())
 
-  private def destroyProducer(): Future[Unit] = {
-    Future {
-      blocking {
-        producer.destroy()
-      }
-    }
-  }
+  private def destroyProducer(): F[Unit] = Async[F].delay(producer.destroy())
 }

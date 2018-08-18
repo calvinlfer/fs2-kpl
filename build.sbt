@@ -19,5 +19,7 @@ version := sys.props
 libraryDependencies ++= {
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.21"
   val amazonKinesisProducer = "com.amazonaws" % "amazon-kinesis-producer" % "0.12.9"
-  Seq(slf4j, amazonKinesisProducer)
+  val catsEffect = "org.typelevel" %% "cats-effect" % "0.10.1"
+
+  Seq(slf4j, amazonKinesisProducer, catsEffect)
 }
