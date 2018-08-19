@@ -14,9 +14,9 @@ import scala.language.{higherKinds, implicitConversions}
 
 
 // Interpreter
-private[kinesis] class ScalaKinesisProducerImpl[F[_]: Async: Monad](private val producer: KinesisProducer) extends ScalaKinesisProducer[F] {
+private[kinesis] class ScalaKinesisProducerImpl[F[_]](private val producer: KinesisProducer)(implicit A: Async[F], M: Monad[F]) extends ScalaKinesisProducer[F] {
   def send(streamName: String, partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String]): F[UserRecordResult] =
-    Async[F].async { callback =>
+    A.async { callback =>
       val listenableFuture = producer.addUserRecord(streamName, partitionKey, explicitHashKey.orNull, data)
         Futures.addCallback(listenableFuture, new FutureCallback[UserRecordResult] {
           override def onSuccess(result: UserRecordResult): Unit =
@@ -39,7 +39,7 @@ private[kinesis] class ScalaKinesisProducerImpl[F[_]: Async: Monad](private val 
     )
   }
 
-  private def flushAll(): F[Unit] = Async[F].delay(producer.flushSync())
+  private def flushAll(): F[Unit] = A.delay(producer.flushSync())
 
-  private def destroyProducer(): F[Unit] = Async[F].delay(producer.destroy())
+  private def destroyProducer(): F[Unit] = A.delay(producer.destroy())
 }
