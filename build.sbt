@@ -16,10 +16,13 @@ version := sys.props
   }
   .getOrElse("LOCAL-SNAPSHOT")
 
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
+
 libraryDependencies ++= {
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.21"
   val amazonKinesisProducer = "com.amazonaws" % "amazon-kinesis-producer" % "0.12.9"
-  val catsEffect = "org.typelevel" %% "cats-effect" % "0.10.1"
+  val catsEffect = "org.typelevel" %% "cats-effect" % "1.0.0-RC2"
+  val fs2 = "co.fs2" %% "fs2-core" % "1.0.0-M3"
 
-  Seq(slf4j, amazonKinesisProducer, catsEffect)
+  Seq(slf4j, amazonKinesisProducer, catsEffect, fs2)
 }
