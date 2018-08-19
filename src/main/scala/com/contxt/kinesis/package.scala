@@ -12,13 +12,13 @@ import scala.language.higherKinds
 package object kinesis {
   object ScalaKinesisProducer {
     // unsafe means that you the user will provide resource management (you will call shutdown only once when/if your program terminates)
-    def unsafe[F[_]: Async: Monad](kplConfig: KinesisProducerConfiguration): F[ScalaKinesisProducer[F]] = Async[F].delay {
+    def unsafe[F[_]: Async: Monad](kplConfig: => KinesisProducerConfiguration): F[ScalaKinesisProducer[F]] = Async[F].delay {
       val producer = new KinesisProducer(kplConfig) // this side-effects
       new ScalaKinesisProducerImpl[F](producer)
     }
 
     // safe abstractions
-    def apply[F[_]: Async](kplConfig: KinesisProducerConfiguration): Resource[F, ScalaKinesisProducer[F]] = {
+    def apply[F[_]: Async](kplConfig: => KinesisProducerConfiguration): Resource[F, ScalaKinesisProducer[F]] = {
       val acquire: F[ScalaKinesisProducer[F]] = Async[F].delay {
         val producer = new KinesisProducer(kplConfig) // this side-effects
         new ScalaKinesisProducerImpl[F](producer)
@@ -30,7 +30,7 @@ package object kinesis {
       Resource.make(acquire)(release)
     }
 
-    def stream[F[_]: Async](kplConfig: KinesisProducerConfiguration): Stream[F, ScalaKinesisProducer[F]] = {
+    def stream[F[_]: Async](kplConfig: => KinesisProducerConfiguration): Stream[F, ScalaKinesisProducer[F]] = {
       val acquire: F[ScalaKinesisProducer[F]] = Async[F].delay {
         val producer = new KinesisProducer(kplConfig) // this side-effects
         new ScalaKinesisProducerImpl[F](producer)
