@@ -2,7 +2,7 @@ package com.contxt
 
 import cats.Monad
 import cats.effect.{Async, Resource}
-import com.amazonaws.services.kinesis.producer.{KinesisProducer, KinesisProducerConfiguration, UserRecordResult}
+import com.amazonaws.services.kinesis.producer.{KinesisProducer, KinesisProducerConfiguration}
 import com.contxt.kinesis.algebras.ScalaKinesisProducer
 import com.contxt.kinesis.interpreters.ScalaKinesisProducerImpl
 import fs2._
@@ -17,8 +17,8 @@ package object kinesis {
       new ScalaKinesisProducerImpl[F](producer)
     }
 
-    def resource[F[_]](kplConfig: KinesisProducerConfiguration)(implicit F: Async[F]): Resource[F, ScalaKinesisProducer[F]] = {
-      val acquire: F[ScalaKinesisProducer[F]] = F.delay {
+    def resource[F[_]: Async](kplConfig: KinesisProducerConfiguration): Resource[F, ScalaKinesisProducer[F]] = {
+      val acquire: F[ScalaKinesisProducer[F]] = Async[F].delay {
         val producer = new KinesisProducer(kplConfig) // this side-effects
         new ScalaKinesisProducerImpl[F](producer)
       }
@@ -29,8 +29,8 @@ package object kinesis {
       Resource.make(acquire)(release)
     }
 
-    def stream[F[_]](kplConfig: KinesisProducerConfiguration)(implicit F: Async[F]): Stream[F, ScalaKinesisProducer[F]] = {
-      val acquire: F[ScalaKinesisProducer[F]] = F.delay {
+    def stream[F[_]: Async](kplConfig: KinesisProducerConfiguration): Stream[F, ScalaKinesisProducer[F]] = {
+      val acquire: F[ScalaKinesisProducer[F]] = Async[F].delay {
         val producer = new KinesisProducer(kplConfig) // this side-effects
         new ScalaKinesisProducerImpl[F](producer)
       }
