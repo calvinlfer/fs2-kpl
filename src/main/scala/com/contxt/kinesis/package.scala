@@ -1,10 +1,7 @@
 package com.contxt
 
-import java.nio.ByteBuffer
-
 import cats.Monad
 import cats.effect.{Async, Resource}
-import cats.syntax.all._
 import com.amazonaws.services.kinesis.producer.{KinesisProducer, KinesisProducerConfiguration, UserRecordResult}
 import com.contxt.kinesis.algebras.ScalaKinesisProducer
 import com.contxt.kinesis.interpreters.ScalaKinesisProducerImpl
@@ -33,25 +30,13 @@ package object kinesis {
     }
 
     def stream[F[_]](kplConfig: KinesisProducerConfiguration)(implicit F: Async[F]): Stream[F, ScalaKinesisProducer[F]] = {
-      val internal: F[ScalaKinesisProducer[F]] = F.delay {
+      val acquire: F[ScalaKinesisProducer[F]] = F.delay {
         val producer = new KinesisProducer(kplConfig) // this side-effects
         new ScalaKinesisProducerImpl[F](producer)
       }
 
-      // This hackery is done to prevent the user from shooting themselves in the foot accidentally when using a
-      // safe abstraction since the safe abstraction will free up resources on your behalf
-      val acquire: F[ScalaKinesisProducer[F]] =
-        internal.map { impl =>
-        new ScalaKinesisProducer[F] {
-          override def send(streamName: String, partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String]): F[UserRecordResult] =
-            impl.send(streamName, partitionKey, data, explicitHashKey)
-
-          override def shutdown(): F[Unit] = F.delay(())
-        }
-      }
-
       val release: ScalaKinesisProducer[F] => F[Unit] =
-        producer => internal.map(impl => impl.shutdown())
+        producer => producer.shutdown()
 
       Stream.bracket(acquire)(release)
     }
