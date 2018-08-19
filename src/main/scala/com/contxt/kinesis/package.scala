@@ -17,7 +17,8 @@ package object kinesis {
       new ScalaKinesisProducerImpl[F](producer)
     }
 
-    def resource[F[_]: Async](kplConfig: KinesisProducerConfiguration): Resource[F, ScalaKinesisProducer[F]] = {
+    // safe abstractions
+    def apply[F[_]: Async](kplConfig: KinesisProducerConfiguration): Resource[F, ScalaKinesisProducer[F]] = {
       val acquire: F[ScalaKinesisProducer[F]] = Async[F].delay {
         val producer = new KinesisProducer(kplConfig) // this side-effects
         new ScalaKinesisProducerImpl[F](producer)
