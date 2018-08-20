@@ -1,26 +1,18 @@
-package com.contxt
+package com.github.calvinlfer.fs2
 
-import cats.Monad
 import cats.effect.{Async, Resource}
 import com.amazonaws.services.kinesis.producer.{KinesisProducer, KinesisProducerConfiguration}
-import com.contxt.kinesis.algebras.ScalaKinesisProducer
-import com.contxt.kinesis.interpreters.ScalaKinesisProducerImpl
+import com.github.calvinlfer.fs2.kpl.algebras.ScalaKinesisProducer
+import com.github.calvinlfer.fs2.kpl.interpreters.ScalaKinesisProducerImpl
 import fs2._
 
 import scala.language.higherKinds
 
-package object kinesis {
+package object kpl {
   object ScalaKinesisProducer {
-    // unsafe means that you the user will provide resource management (you will call shutdown only once when/if your program terminates)
-    def unsafe[F[_]: Async: Monad](kplConfig: => KinesisProducerConfiguration): F[ScalaKinesisProducer[F]] = Async[F].delay {
-      val producer = new KinesisProducer(kplConfig) // this side-effects
-      new ScalaKinesisProducerImpl[F](producer)
-    }
-
-    // safe abstractions
     def apply[F[_]: Async](kplConfig: => KinesisProducerConfiguration): Resource[F, ScalaKinesisProducer[F]] = {
       val acquire: F[ScalaKinesisProducer[F]] = Async[F].delay {
-        val producer = new KinesisProducer(kplConfig) // this side-effects
+        val producer = new KinesisProducer(kplConfig)
         new ScalaKinesisProducerImpl[F](producer)
       }
 
@@ -32,7 +24,7 @@ package object kinesis {
 
     def stream[F[_]: Async](kplConfig: => KinesisProducerConfiguration): Stream[F, ScalaKinesisProducer[F]] = {
       val acquire: F[ScalaKinesisProducer[F]] = Async[F].delay {
-        val producer = new KinesisProducer(kplConfig) // this side-effects
+        val producer = new KinesisProducer(kplConfig)
         new ScalaKinesisProducerImpl[F](producer)
       }
 

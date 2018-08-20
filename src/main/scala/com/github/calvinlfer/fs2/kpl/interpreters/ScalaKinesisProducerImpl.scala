@@ -1,4 +1,4 @@
-package com.contxt.kinesis.interpreters
+package com.github.calvinlfer.fs2.kpl.interpreters
 
 import java.nio.ByteBuffer
 
@@ -6,30 +6,38 @@ import cats.Monad
 import cats.effect._
 import cats.syntax.all._
 import com.amazonaws.services.kinesis.producer.{KinesisProducer, UserRecordResult}
-import com.contxt.kinesis.algebras.ScalaKinesisProducer
+import com.github.calvinlfer.fs2.kpl.algebras.ScalaKinesisProducer
 import com.google.common.util.concurrent.{FutureCallback, Futures}
 
 import scala.collection.JavaConversions._
 import scala.language.{higherKinds, implicitConversions}
 
-
 // Interpreter
-private[kinesis] class ScalaKinesisProducerImpl[F[_]](private val producer: KinesisProducer)(implicit A: Async[F], M: Monad[F]) extends ScalaKinesisProducer[F] {
-  def send(streamName: String, partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String]): F[UserRecordResult] =
+private[kpl] class ScalaKinesisProducerImpl[F[_]](private val producer: KinesisProducer)(implicit A: Async[F],
+                                                                                         M: Monad[F])
+    extends ScalaKinesisProducer[F] {
+  def send(streamName: String,
+           partitionKey: String,
+           data: ByteBuffer,
+           explicitHashKey: Option[String]): F[UserRecordResult] =
     A.async { callback =>
       val listenableFuture = producer.addUserRecord(streamName, partitionKey, explicitHashKey.orNull, data)
-        Futures.addCallback(listenableFuture, new FutureCallback[UserRecordResult] {
+      Futures.addCallback(
+        listenableFuture,
+        new FutureCallback[UserRecordResult] {
           override def onSuccess(result: UserRecordResult): Unit =
             if (result.isSuccessful) callback(Right(result)) else callback(Left(sendFailedException(result)))
 
           override def onFailure(t: Throwable): Unit = callback(Left(t))
-        })
+        }
+      )
     }
 
-  def shutdown(): F[Unit] = for {
-    _ <- flushAll()
-    _ <- destroyProducer()
-  } yield ()
+  def shutdown(): F[Unit] =
+    for {
+      _ <- flushAll()
+      _ <- destroyProducer()
+    } yield ()
 
   private def sendFailedException(result: UserRecordResult): RuntimeException = {
     val attemptCount = result.getAttempts.size

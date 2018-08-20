@@ -1,4 +1,4 @@
-package com.contxt.kinesis.algebras
+package com.github.calvinlfer.fs2.kpl.algebras
 
 import java.nio.ByteBuffer
 
@@ -7,10 +7,14 @@ import com.amazonaws.services.kinesis.producer.UserRecordResult
 import scala.language.higherKinds
 
 trait ScalaKinesisProducer[F[_]] {
+
   /** Sends a record to a stream. See
     * [[[com.amazonaws.services.kinesis.producer.KinesisProducer.addUserRecord(String, String, String, ByteBuffer):ListenableFuture[UserRecordResult]*]]].
     */
-  def send(streamName: String, partitionKey: String, data: ByteBuffer, explicitHashKey: Option[String] = None): F[UserRecordResult]
+  def send(streamName: String,
+           partitionKey: String,
+           data: ByteBuffer,
+           explicitHashKey: Option[String] = None): F[UserRecordResult]
 
   /**
     * Performs an orderly shutdown, waiting for all the outgoing messages before destroying the underlying producer.
@@ -19,5 +23,5 @@ trait ScalaKinesisProducer[F[_]] {
     * the unsafe use-case and then for all other safe abstractions (Resource and FS2 Stream) keep it protected so I have
     * to make this public and expose this in all safe (where I don't want this) and non-safe abstractions
     */
-  def shutdown(): F[Unit]
+  protected[kpl] def shutdown(): F[Unit]
 }
