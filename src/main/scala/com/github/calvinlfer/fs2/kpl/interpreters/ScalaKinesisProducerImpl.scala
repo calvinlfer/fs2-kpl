@@ -12,7 +12,6 @@ import com.google.common.util.concurrent.{FutureCallback, Futures}
 import scala.collection.JavaConversions._
 import scala.language.{higherKinds, implicitConversions}
 
-// Interpreter
 private[kpl] class ScalaKinesisProducerImpl[F[_]](private val producer: KinesisProducer)(implicit A: Async[F],
                                                                                          M: Monad[F])
     extends ScalaKinesisProducer[F] {
