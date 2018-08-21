@@ -15,4 +15,7 @@ The vanilla AWS KPL library is very simple providing just `addUserRecord` (calle
 messages to Kinesis and `shutdown` relying on the user to safely perform a shutdown when the KPL resource is no longer 
 needed. Along, with this, a few APIs to obtain metrics and for advanced usage, a `flush` to forcefully send all 
 aggregated records that are being buffered. The main problem with the vanilla library is that it provides Guava 
-ListenableFutures which are not easy to work with 
+ListenableFutures which are not easy to work with from Scala and the vanilla API commits to a concrete effect too early. 
+
+This library takes a Tagless Final approach and allows the user decide which effect they want to use (Cats Effect IO, 
+Monix Task, ScalaZ ZIO) provided that they have the typeclass constraints enforced by Cats Effect typeclasses. 
