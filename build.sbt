@@ -3,8 +3,6 @@ organization in ThisBuild := "com.github.calvinlfer"
 scalaVersion in ThisBuild := "2.12.6"
 crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.6")
 
-enablePlugins(MicrositesPlugin)
-
 val commonSettings = Seq(
   scalacOptions ++= Seq(
     "-deprecation", // Emit warning and location for usages of deprecated APIs.
@@ -63,12 +61,43 @@ val commonSettings = Seq(
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
 )
 
+lazy val noPublish = Seq(
+  publish := {},
+  publishLocal := {},
+  publishArtifact := false,
+  skip in publish := true
+)
+
 lazy val core = project.in(file("core")).settings(commonSettings: _*)
 
 lazy val examples =
-  project.in(file("examples"))
+  project
+    .in(file("examples"))
     .settings(commonSettings: _*)
     .settings(libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3")
+    .settings(noPublish: _*)
     .dependsOn(core)
 
-lazy val `fs2-kpl` = project.in(file(".")).aggregate(core, examples)
+lazy val microsite =
+  project
+    .in(file("microsite"))
+    .enablePlugins(MicrositesPlugin)
+    .settings(noPublish: _*)
+    .settings(commonSettings: _*)
+    .settings(
+      micrositeName := "FS2 KPL",
+      micrositeDescription := "FS2 and Cats Effect bindings for AWS Kinesis Producer Library",
+      micrositeAuthor := "Calvin Lee Fernandes",
+      micrositeGithubOwner := "calvinlfer",
+      micrositeGithubRepo := "fs2-kpl",
+      micrositeBaseUrl := "/fs2-kpl",
+      scalacOptions in Tut --= Seq(
+        "-Xfatal-warnings",
+        "-Ywarn-unused-import",
+        "-Ywarn-numeric-widen",
+        "-Ywarn-dead-code",
+        "-Xlint:-missing-interpolator,_",
+      )
+    )
+
+lazy val `fs2-kpl` = project.in(file(".")).aggregate(core, examples).settings(noPublish: _*)

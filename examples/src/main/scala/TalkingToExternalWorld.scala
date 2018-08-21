@@ -5,8 +5,7 @@ import cats.Monad
 import cats.syntax.all._
 import cats.effect.{Async, ContextShift, IO}
 import com.amazonaws.services.kinesis.producer.{KinesisProducerConfiguration, UserRecordResult}
-import com.github.calvinlfer.fs2.kpl.ScalaKinesisProducer
-import com.github.calvinlfer.fs2.kpl.algebras.ScalaKinesisProducer
+import com.github.calvinlfer.fs2.kpl._
 import fs2._
 import fs2.async.mutable.Queue
 
@@ -14,6 +13,9 @@ object TalkingToExternalWorld extends App {
   def producerConfig: KinesisProducerConfiguration = {
     val config = new KinesisProducerConfiguration()
     config.setRegion("us-west-2")
+    config.setAggregationEnabled(true)
+    config.setAggregationEnabled(true)
+    config.setMetricsLevel("summary")
     config
   }
 

@@ -3,7 +3,8 @@ package com.github.calvinlfer.fs2.kpl.interpreters
 import java.nio.ByteBuffer
 
 import cats.effect._
-import cats.syntax.all._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import com.amazonaws.services.kinesis.producer.{KinesisProducer, UserRecordResult}
 import com.github.calvinlfer.fs2.kpl.algebras.ScalaKinesisProducer
 import com.google.common.util.concurrent.{FutureCallback, Futures}
