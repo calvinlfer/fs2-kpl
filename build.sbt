@@ -1,4 +1,4 @@
-name := "fs2-kpl"
+name := "scala-kpl-fp"
 organization in ThisBuild := "com.github.calvinlfer"
 scalaVersion in ThisBuild := "2.12.6"
 crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.6")
@@ -85,12 +85,12 @@ lazy val microsite =
     .settings(noPublish: _*)
     .settings(commonSettings: _*)
     .settings(
-      micrositeName := "FS2 KPL",
+      micrositeName := "Scala KPL FP",
       micrositeDescription := "FS2 and Cats Effect bindings for AWS Kinesis Producer Library",
       micrositeAuthor := "Calvin Lee Fernandes",
       micrositeGithubOwner := "calvinlfer",
-      micrositeGithubRepo := "fs2-kpl",
-      micrositeBaseUrl := "/fs2-kpl",
+      micrositeGithubRepo := "scala-kpl-fp",
+      micrositeBaseUrl := "/scala-kpl-fp",
       scalacOptions in Tut --= Seq(
         "-Xfatal-warnings",
         "-Ywarn-unused-import",
@@ -100,4 +100,4 @@ lazy val microsite =
       )
     )
 
-lazy val `fs2-kpl` = project.in(file(".")).aggregate(core, examples).settings(noPublish: _*)
+lazy val `scala-kpl-fp` = project.in(file(".")).aggregate(core, examples).settings(noPublish: _*)
