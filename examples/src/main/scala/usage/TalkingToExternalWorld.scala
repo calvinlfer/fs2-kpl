@@ -1,12 +1,14 @@
+package usage
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
 import cats.Monad
-import cats.syntax.all._
 import cats.effect.{Async, ContextShift, IO}
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import com.amazonaws.services.kinesis.producer.{KinesisProducerConfiguration, UserRecordResult}
-import com.github.calvinlfer.fs2.kpl._
-import fs2._
+import com.github.calvinlfer.fs2.kpl.ScalaKinesisProducer
+import fs2.Stream
 import fs2.async.mutable.Queue
 
 object TalkingToExternalWorld extends App {

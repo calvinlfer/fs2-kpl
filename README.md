@@ -18,4 +18,5 @@ aggregated records that are being buffered. The main problem with the vanilla li
 ListenableFutures which are not easy to work with from Scala and the vanilla API commits to a concrete effect too early. 
 
 This library takes a Tagless Final approach and allows the user decide which effect they want to use (Cats Effect IO, 
-Monix Task, ScalaZ ZIO) provided that they have the typeclass constraints enforced by Cats Effect typeclasses. 
+Monix Task, ScalaZ ZIO) provided that the selected effect type has the typeclass constraints enforced by 
+Cats Effect typeclasses. 

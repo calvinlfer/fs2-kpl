@@ -1,11 +1,12 @@
+package usage
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
-import cats.effect.{IO, Resource}
+import cats.effect.{ExitCode, IO, IOApp, Resource}
 import com.amazonaws.services.kinesis.producer.{KinesisProducerConfiguration, UserRecord}
-import com.github.calvinlfer.fs2.kpl._
+import com.github.calvinlfer.fs2.kpl.ScalaKinesisProducer
 
-object ResourceAPIUsage extends App {
+object ResourceApi extends IOApp {
   def producerConfig: KinesisProducerConfiguration = {
     val config = new KinesisProducerConfiguration()
     config.setRegion("us-west-2")
@@ -27,5 +28,6 @@ object ResourceAPIUsage extends App {
     } yield ()
   }
 
-  program.unsafeRunSync()
+  override def run(args: List[String]): IO[ExitCode] =
+    program.map(_ => ExitCode.Success)
 }
