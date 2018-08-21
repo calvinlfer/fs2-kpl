@@ -117,5 +117,5 @@ program[IO].compile.drain
 ### Integration with the external world
 
 You can also use this library if you are working in a non-functional style, See 
-[here](https://github.com/calvinlfer/fs2-kpl/blob/master/examples/src/main/scala/usage/TalkingToExternalWorld.scala) 
+[here](https://github.com/calvinlfer/scala-kpl-fp/blob/master/examples/src/main/scala/usage/TalkingToExternalWorld.scala) 
 for an example. We make use of an `fs2.async.mutable.Queue` to bridge FS2 Streams with the external world.

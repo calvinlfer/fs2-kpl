@@ -88,7 +88,7 @@ lazy val microsite =
     .settings(commonSettings: _*)
     .settings(
       micrositeName := "Scala KPL FP",
-      micrositeDescription := "FS2 and Cats Effect bindings for AWS Kinesis Producer Library",
+      micrositeDescription := "FS2 and Cats Effect bindings for the AWS Kinesis Producer Library",
       micrositeAuthor := "Calvin Lee Fernandes",
       micrositeGithubOwner := "calvinlfer",
       micrositeGithubRepo := "scala-kpl-fp",
