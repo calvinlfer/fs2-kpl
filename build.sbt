@@ -100,7 +100,9 @@ lazy val microsite =
         "-Ywarn-dead-code",
         "-Xlint:-missing-interpolator,_",
       ),
-      micrositeExtraMdFiles := Map(file("README.md") -> ExtraMdFileConfig("index.md", "home"))
+      micrositeExtraMdFiles := Map(file("README.md") -> ExtraMdFileConfig("index.md", "home")),
+      micrositePushSiteWith := GitHub4s,
+      micrositeGithubToken := sys.env.get("GITHUB_TOKEN")
     )
     .dependsOn(core)
 
