@@ -1,0 +1,11 @@
+name: Scala KPL FP
+baseurl: /scala-kpl-fp
+description: FS2 and Cats Effect bindings for the AWS Kinesis Producer Library
+highlighter: rouge
+docs: true
+collections:
+  tut:
+    output: true
+version: 0.1-SNAPSHOT
+org: com.github.calvinlfer
+markdown: kramdown

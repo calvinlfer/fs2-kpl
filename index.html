@@ -1,0 +1,123 @@
+<html><head><title>Scala KPL FP</title><meta charset="utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Calvin Lee Fernandes" /><meta name="description" content="FS2 and Cats Effect bindings for the AWS Kinesis Producer Library" /><meta name="og:image" content="/scala-kpl-fp/img/poster.png" /><meta name="og:title" content="Scala KPL FP" /><meta name="og:site_name" content="Scala KPL FP" /><meta name="og:url" content="" /><meta name="og:type" content="website" /><meta name="og:description" content="FS2 and Cats Effect bindings for the AWS Kinesis Producer Library" /><link rel="icon" type="image/png" href="/scala-kpl-fp/img/favicon.png" /><meta name="twitter:title" content="Scala KPL FP" /><meta name="twitter:image" content="img/poster.png" /><meta name="twitter:description" content="FS2 and Cats Effect bindings for the AWS Kinesis Producer Library" /><meta name="twitter:card" content="summary_large_image" /><link rel="icon" type="image/png" sizes="16x16" href="/scala-kpl-fp/img/favicon16x16.png" /><link rel="icon" type="image/png" sizes="24x24" href="/scala-kpl-fp/img/favicon24x24.png" /><link rel="icon" type="image/png" sizes="32x32" href="/scala-kpl-fp/img/favicon32x32.png" /><link rel="icon" type="image/png" sizes="48x48" href="/scala-kpl-fp/img/favicon48x48.png" /><link rel="icon" type="image/png" sizes="57x57" href="/scala-kpl-fp/img/favicon57x57.png" /><link rel="icon" type="image/png" sizes="60x60" href="/scala-kpl-fp/img/favicon60x60.png" /><link rel="icon" type="image/png" sizes="64x64" href="/scala-kpl-fp/img/favicon64x64.png" /><link rel="icon" type="image/png" sizes="70x70" href="/scala-kpl-fp/img/favicon70x70.png" /><link rel="icon" type="image/png" sizes="72x72" href="/scala-kpl-fp/img/favicon72x72.png" /><link rel="icon" type="image/png" sizes="76x76" href="/scala-kpl-fp/img/favicon76x76.png" /><link rel="icon" type="image/png" sizes="96x96" href="/scala-kpl-fp/img/favicon96x96.png" /><link rel="icon" type="image/png" sizes="114x114" href="/scala-kpl-fp/img/favicon114x114.png" /><link rel="icon" type="image/png" sizes="120x120" href="/scala-kpl-fp/img/favicon120x120.png" /><link rel="icon" type="image/png" sizes="128x128" href="/scala-kpl-fp/img/favicon128x128.png" /><link rel="icon" type="image/png" sizes="144x144" href="/scala-kpl-fp/img/favicon144x144.png" /><link rel="icon" type="image/png" sizes="150x150" href="/scala-kpl-fp/img/favicon150x150.png" /><link rel="icon" type="image/png" sizes="152x152" href="/scala-kpl-fp/img/favicon152x152.png" /><link rel="icon" type="image/png" sizes="196x196" href="/scala-kpl-fp/img/favicon196x196.png" /><link rel="icon" type="image/png" sizes="310x310" href="/scala-kpl-fp/img/favicon310x310.png" /><link rel="icon" type="image/png" sizes="310x150" href="/scala-kpl-fp/img/favicon310x150.png" /><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" /><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" /><link rel="stylesheet" href="/scala-kpl-fp/highlight/styles/default.css" /><link rel="stylesheet" href="/scala-kpl-fp/css/style.css" /><link rel="stylesheet" href="/scala-kpl-fp/css/palette.css" /><link rel="stylesheet" href="/scala-kpl-fp/css/codemirror.css" /></head><body><header id="site-header"><div class="navbar-wrapper"><div class="container"><div class="row"><div class="col-xs-6"><a href="/scala-kpl-fp/" class="brand"><div class="icon-wrapper"><span>Scala KPL FP</span></div></a></div><div class="col-xs-6"><nav class="text-right"><ul class=""><li><a href="https://github.com/calvinlfer/scala-kpl-fp"><i class="fa fa-github"></i><span class="hidden-xs">GitHub</span></a></li></ul></nav></div></div></div></div><div class="jumbotron"><div class="container"><h1 class="text-center">FS2 and Cats Effect bindings for the AWS Kinesis Producer Library</h1><h2></h2><p class="text-center"><a href="https://github.com/calvinlfer/scala-kpl-fp" class="btn btn-outline-inverse">View on GitHub</a></p></div></div><div><ul class="horizontalNav">      </ul></div></header><main id="site-main"><section class="use"><div class="container"><div id="content"><h1 id="scala-kpl-fp">Scala KPL FP</h1>
+
+<p><em>FS2 and Cats effect bindings for the AWS Kinesis KPL library</em></p>
+
+<p>Forked from <a href="https://github.com/StreetContxt/kpl-scala">here</a></p>
+
+<p>AWS KPL (Kinesis Producer Library) for Scala implemented atop FS2 Streams and Cats Effect.</p>
+
+<p><code class="highlighter-rouge">fs2-kpl</code> provides access to the KPL library using <code class="highlighter-rouge">cats.effect.Resource</code> or <code class="highlighter-rouge">fs2.Stream</code> which 
+automatically handles resource management.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>The vanilla AWS KPL library is very simple providing just <code class="highlighter-rouge">addUserRecord</code> (called <code class="highlighter-rouge">send</code> in the Scala API) to send 
+messages to Kinesis and <code class="highlighter-rouge">shutdown</code> relying on the user to safely perform a shutdown when the KPL resource is no longer 
+needed. Along, with this, a few APIs to obtain metrics and for advanced usage, a <code class="highlighter-rouge">flush</code> to forcefully send all 
+aggregated records that are being buffered. The main problem with the vanilla library is that it provides Guava 
+ListenableFutures which are not easy to work with from Scala and the vanilla API commits to a concrete effect too early.</p>
+
+<p>This library takes a Tagless Final approach and allows the user decide which effect they want to use (Cats Effect IO, 
+Monix Task, ScalaZ ZIO) provided that the selected effect type has the typeclass constraints enforced by 
+Cats Effect typeclasses.</p>
+
+<h2 id="examples">Examples</h2>
+
+<h3 id="resource-api">Resource API</h3>
+
+<p>You can safely obtain access via <code class="highlighter-rouge">cats.effect.Resource</code> and the abstraction will take care of shutting down the KPL and
+cleaning up resources</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">java.nio.ByteBuffer</span>
+<span class="k">import</span> <span class="nn">java.nio.charset.StandardCharsets</span>
+
+<span class="k">import</span> <span class="nn">cats.effect._</span>
+<span class="k">import</span> <span class="nn">com.amazonaws.services.kinesis.producer._</span>
+<span class="k">import</span> <span class="nn">com.github.calvinlfer.fs2.kpl.ScalaKinesisProducer</span>
+
+<span class="k">def</span> <span class="n">producerConfig</span><span class="k">:</span> <span class="kt">KinesisProducerConfiguration</span> <span class="o">=</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">config</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">KinesisProducerConfiguration</span><span class="o">()</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">setRegion</span><span class="o">(</span><span class="s">"us-west-2"</span><span class="o">)</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">setAggregationEnabled</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">setAggregationEnabled</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">setMetricsLevel</span><span class="o">(</span><span class="s">"summary"</span><span class="o">)</span>
+    <span class="n">config</span>
+<span class="o">}</span>
+
+<span class="k">val</span> <span class="n">kplResource</span><span class="k">:</span> <span class="kt">Resource</span><span class="o">[</span><span class="kt">IO</span>, <span class="kt">ScalaKinesisProducer</span><span class="o">[</span><span class="kt">IO</span><span class="o">]]</span> <span class="k">=</span> <span class="nc">ScalaKinesisProducer</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="n">producerConfig</span><span class="o">)</span>
+
+<span class="k">def</span> <span class="n">mkUserRecord</span><span class="o">(</span><span class="n">content</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">UserRecord</span> <span class="o">=</span>
+    <span class="k">new</span> <span class="nc">UserRecord</span><span class="o">(</span><span class="s">"calvin-test-stream"</span><span class="o">,</span> <span class="s">"1"</span><span class="o">,</span> <span class="nc">ByteBuffer</span><span class="o">.</span><span class="n">wrap</span><span class="o">(</span><span class="n">content</span><span class="o">.</span><span class="n">getBytes</span><span class="o">(</span><span class="nc">StandardCharsets</span><span class="o">.</span><span class="nc">UTF_8</span><span class="o">)))</span>
+
+<span class="k">val</span> <span class="n">program</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="n">kplResource</span><span class="o">.</span><span class="n">use</span> <span class="o">{</span> <span class="n">kinesis</span><span class="k">:</span> <span class="kt">ScalaKinesisProducer</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=&gt;</span>
+    <span class="k">for</span> <span class="o">{</span>
+      <span class="k">_</span> <span class="k">&lt;-</span> <span class="n">kinesis</span><span class="o">.</span><span class="n">send</span><span class="o">(</span><span class="n">mkUserRecord</span><span class="o">(</span><span class="s">"hello"</span><span class="o">))</span>
+      <span class="k">_</span> <span class="k">&lt;-</span> <span class="n">kinesis</span><span class="o">.</span><span class="n">send</span><span class="o">(</span><span class="n">mkUserRecord</span><span class="o">(</span><span class="s">"bye!"</span><span class="o">))</span>
+    <span class="o">}</span> <span class="k">yield</span> <span class="o">()</span>
+<span class="o">}</span>
+
+<span class="n">program</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span> <span class="k">=&gt;</span> <span class="nc">ExitCode</span><span class="o">.</span><span class="nc">Success</span><span class="o">)</span>
+</code></pre></div></div>
+
+<h3 id="streams-api">Streams API</h3>
+
+<p>You can also safely obtain access via <code class="highlighter-rouge">fs2.Stream</code> if you are working with FS2 Streams and need to set up a streaming
+pipeline that needs to publish data to Kinesis</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">java.nio.ByteBuffer</span>
+<span class="k">import</span> <span class="nn">java.nio.charset.StandardCharsets</span>
+
+<span class="k">import</span> <span class="nn">cats.effect._</span>
+<span class="k">import</span> <span class="nn">com.amazonaws.services.kinesis.producer._</span>
+<span class="k">import</span> <span class="nn">fs2._</span>
+<span class="k">import</span> <span class="nn">com.github.calvinlfer.fs2.kpl._</span>
+
+<span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext</span>
+<span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
+
+<span class="k">def</span> <span class="n">producerConfig</span><span class="k">:</span> <span class="kt">KinesisProducerConfiguration</span> <span class="o">=</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">config</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">KinesisProducerConfiguration</span><span class="o">()</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">setRegion</span><span class="o">(</span><span class="s">"us-west-2"</span><span class="o">)</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">setAggregationEnabled</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">setAggregationEnabled</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">setMetricsLevel</span><span class="o">(</span><span class="s">"summary"</span><span class="o">)</span>
+  <span class="n">config</span>
+<span class="o">}</span>
+
+<span class="k">def</span> <span class="n">mkUserRecord</span><span class="o">(</span><span class="n">content</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">UserRecord</span> <span class="o">=</span> <span class="o">{</span>
+  <span class="k">new</span> <span class="nc">UserRecord</span><span class="o">(</span><span class="s">"calvin-test-stream"</span><span class="o">,</span> <span class="s">"1"</span><span class="o">,</span> <span class="nc">ByteBuffer</span><span class="o">.</span><span class="n">wrap</span><span class="o">(</span><span class="n">content</span><span class="o">.</span><span class="n">getBytes</span><span class="o">(</span><span class="nc">StandardCharsets</span><span class="o">.</span><span class="nc">UTF_8</span><span class="o">)))</span>
+<span class="o">}</span>
+
+<span class="k">def</span> <span class="n">pipeline</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Sync:</span> <span class="kt">Timer</span><span class="o">](</span><span class="n">kinesis</span><span class="k">:</span> <span class="kt">ScalaKinesisProducer</span><span class="o">[</span><span class="kt">F</span><span class="o">])</span><span class="k">:</span> <span class="kt">Stream</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="nc">Stream</span>
+    <span class="o">.</span><span class="n">awakeEvery</span><span class="o">[</span><span class="kt">F</span><span class="o">](</span><span class="mf">1.</span><span class="n">second</span><span class="o">)</span>
+    <span class="o">.</span><span class="n">evalMap</span><span class="o">(</span><span class="k">_</span> <span class="k">=&gt;</span> <span class="n">kinesis</span><span class="o">.</span><span class="n">send</span><span class="o">(</span><span class="n">mkUserRecord</span><span class="o">(</span><span class="s">"hello"</span><span class="o">)))</span>
+    <span class="o">.</span><span class="n">to</span><span class="o">(</span><span class="n">inputStream</span> <span class="k">=&gt;</span>
+      <span class="n">inputStream</span><span class="o">.</span><span class="n">evalMap</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">Unit</span><span class="o">](</span><span class="n">recordResult</span> <span class="k">=&gt;</span>
+        <span class="nc">Sync</span><span class="o">[</span><span class="kt">F</span><span class="o">].</span><span class="n">delay</span><span class="o">(</span>
+          <span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"${recordResult.isSuccessful}, ${recordResult.getAttempts.size()}, ${recordResult.getShardId}"</span><span class="o">))))</span>
+<span class="o">}</span>
+
+<span class="k">def</span> <span class="n">program</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Async:</span> <span class="kt">Timer</span><span class="o">]</span><span class="k">:</span> <span class="kt">Stream</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="k">for</span> <span class="o">{</span>
+    <span class="n">kinesis</span> <span class="k">&lt;-</span> <span class="nc">ScalaKinesisProducer</span><span class="o">.</span><span class="n">stream</span><span class="o">[</span><span class="kt">F</span><span class="o">](</span><span class="n">producerConfig</span><span class="o">)</span>
+    <span class="k">_</span>       <span class="k">&lt;-</span> <span class="n">pipeline</span><span class="o">(</span><span class="n">kinesis</span><span class="o">)</span>
+  <span class="o">}</span> <span class="k">yield</span> <span class="o">()</span>
+<span class="o">}</span>
+
+<span class="k">val</span> <span class="n">ec</span><span class="k">:</span> <span class="kt">ExecutionContext</span> <span class="o">=</span> <span class="n">scala</span><span class="o">.</span><span class="n">concurrent</span><span class="o">.</span><span class="nc">ExecutionContext</span><span class="o">.</span><span class="n">global</span>
+<span class="k">implicit</span> <span class="k">val</span> <span class="n">contextShiftIO</span><span class="k">:</span> <span class="kt">ContextShift</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> <span class="nc">IO</span><span class="o">.</span><span class="n">contextShift</span><span class="o">(</span><span class="n">ec</span><span class="o">)</span>
+<span class="k">implicit</span> <span class="k">val</span> <span class="n">timerIO</span><span class="k">:</span> <span class="kt">Timer</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> <span class="n">cats</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="nc">IO</span><span class="o">.</span><span class="n">timer</span><span class="o">(</span><span class="n">ec</span><span class="o">)</span>
+
+<span class="n">program</span><span class="o">[</span><span class="kt">IO</span><span class="o">].</span><span class="n">compile</span><span class="o">.</span><span class="n">drain</span>
+</code></pre></div></div>
+
+<h3 id="integration-with-the-external-world">Integration with the external world</h3>
+
+<p>You can also use this library if you are working in a non-functional style, See 
+<a href="https://github.com/calvinlfer/scala-kpl-fp/blob/master/examples/src/main/scala/usage/TalkingToExternalWorld.scala">here</a> 
+for an example. We make use of an <code class="highlighter-rouge">fs2.async.mutable.Queue</code> to bridge FS2 Streams with the external world.</p>
+</div></div></section><section class="technologies"><div class="container"><div class="row"></div></div></section></main><footer id="site-footer"><div class="container"><div class="row"><div class="col-xs-6"><p>Scala KPL FP is designed and developed by <a href="" target="_blank">Calvin Lee Fernandes</a></p></div><div class="col-xs-6"><p class="text-right"><a href="https://github.com/calvinlfer/scala-kpl-fp"><span class="fa fa-github"></span>View on GitHub</a></p></div></div><div class="row"><div class="col-xs-6"><p>Website built with <a href="https://47deg.github.io/sbt-microsites/" target="_blank">Sbt-microsites</a> - © 2016 <a href="https://www.47deg.com/" target="_blank">47 Degrees</a></p></div></div></div></footer><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script><script src="/scala-kpl-fp/highlight/highlight.pack.js"></script><script>hljs.configure({languages:['scala','java','bash']});
+hljs.initHighlighting();
+              </script><script>((window.gitter = {}).chat = {}).options = {
+room: 'calvinlfer/scala-kpl-fp'};</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js"></script></body></html>
