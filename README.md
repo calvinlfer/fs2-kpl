@@ -4,5 +4,9 @@ _FS2 and Cats effect bindings for the AWS Kinesis KPL library_
 
 Forked from [here](https://github.com/StreetContxt/kpl-scala)
 
-The purpose of this project is to implement KPL Scala using Finally Tagless approach with help of FS2 Streams and Cats 
-Effect Typeclass constraints. 
+AWS KPL (Kinesis Producer Library) for Scala implemented atop FS2 Streams and Cats Effect. 
+
+`fs2-kpl` provides access to the KPL library using `cats.effect.Resource` or `fs2.Stream` which 
+automatically handles resource management. 
+
+See [here]() for examples

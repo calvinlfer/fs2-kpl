@@ -22,16 +22,7 @@ package object kpl {
       Resource.make(acquire)(release)
     }
 
-    def stream[F[_]: Async](kplConfig: => KinesisProducerConfiguration): Stream[F, ScalaKinesisProducer[F]] = {
-      val acquire: F[ScalaKinesisProducer[F]] = Async[F].delay {
-        val producer = new KinesisProducer(kplConfig)
-        new ScalaKinesisProducerImpl[F](producer)
-      }
-
-      val release: ScalaKinesisProducer[F] => F[Unit] =
-        producer => producer.shutdown()
-
-      Stream.bracket(acquire)(release)
-    }
+    def stream[F[_]: Async](kplConfig: => KinesisProducerConfiguration): Stream[F, ScalaKinesisProducer[F]] =
+      Stream.resource(apply(kplConfig))
   }
 }

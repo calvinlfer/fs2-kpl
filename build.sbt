@@ -59,3 +59,5 @@ libraryDependencies ++= Seq(
   "com.amazonaws" % "amazon-kinesis-producer" % "0.12.9",
   "co.fs2"        %% "fs2-core"               % "1.0.0-M4"
 )
+
+enablePlugins(MicrositesPlugin)
