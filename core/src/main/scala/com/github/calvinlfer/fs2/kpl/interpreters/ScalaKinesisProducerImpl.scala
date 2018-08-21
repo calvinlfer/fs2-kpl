@@ -29,6 +29,10 @@ private[kpl] class ScalaKinesisProducerImpl[F[_]](private val producer: KinesisP
       kinesisRecordResult(listenableFuture, callback)
     }
 
+  def flushBuffer(streamName: String): F[Unit] = A.delay(producer.flush(streamName))
+
+  def flushBuffers(): F[Unit] = A.delay(producer.flush())
+
   def shutdown(): F[Unit] =
     for {
       _ <- flushAll()
