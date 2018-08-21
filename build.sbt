@@ -1,3 +1,5 @@
+import microsites.ExtraMdFileConfig
+
 name := "scala-kpl-fp"
 organization in ThisBuild := "com.github.calvinlfer"
 scalaVersion in ThisBuild := "2.12.6"
@@ -97,7 +99,9 @@ lazy val microsite =
         "-Ywarn-numeric-widen",
         "-Ywarn-dead-code",
         "-Xlint:-missing-interpolator,_",
-      )
+      ),
+      micrositeExtraMdFiles := Map(file("README.md") -> ExtraMdFileConfig("index.md", "home"))
     )
+    .dependsOn(core)
 
-lazy val `scala-kpl-fp` = project.in(file(".")).aggregate(core, examples).settings(noPublish: _*)
+lazy val `scala-kpl-fp` = project.in(file(".")).aggregate(core, examples, microsite).settings(noPublish: _*)
