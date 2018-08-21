@@ -9,4 +9,4 @@ AWS KPL (Kinesis Producer Library) for Scala implemented atop FS2 Streams and Ca
 `fs2-kpl` provides access to the KPL library using `cats.effect.Resource` or `fs2.Stream` which 
 automatically handles resource management. 
 
-See [here]() for examples
+The vanilla AWS KPL library is very simple providing just `send` and `shutdown`

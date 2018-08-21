@@ -5,9 +5,9 @@ import java.nio.ByteBuffer
 import cats.effect._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import com.amazonaws.services.kinesis.producer.{KinesisProducer, UserRecordResult}
+import com.amazonaws.services.kinesis.producer.{KinesisProducer, UserRecord, UserRecordResult}
 import com.github.calvinlfer.fs2.kpl.algebras.ScalaKinesisProducer
-import com.google.common.util.concurrent.{FutureCallback, Futures}
+import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture}
 
 import scala.collection.JavaConverters._
 import scala.language.higherKinds
@@ -20,15 +20,13 @@ private[kpl] class ScalaKinesisProducerImpl[F[_]](private val producer: KinesisP
            explicitHashKey: Option[String]): F[UserRecordResult] =
     A.async { callback =>
       val listenableFuture = producer.addUserRecord(streamName, partitionKey, explicitHashKey.orNull, data)
-      Futures.addCallback(
-        listenableFuture,
-        new FutureCallback[UserRecordResult] {
-          override def onSuccess(result: UserRecordResult): Unit =
-            if (result.isSuccessful) callback(Right(result)) else callback(Left(sendFailedException(result)))
+      kinesisRecordResult(listenableFuture, callback)
+    }
 
-          override def onFailure(t: Throwable): Unit = callback(Left(t))
-        }
-      )
+  def send(record: UserRecord): F[UserRecordResult] =
+    A.async { callback =>
+      val listenableFuture = producer.addUserRecord(record)
+      kinesisRecordResult(listenableFuture, callback)
     }
 
   def shutdown(): F[Unit] =
@@ -36,6 +34,18 @@ private[kpl] class ScalaKinesisProducerImpl[F[_]](private val producer: KinesisP
       _ <- flushAll()
       _ <- destroyProducer()
     } yield ()
+
+  private def kinesisRecordResult(listenableFuture: ListenableFuture[UserRecordResult],
+                                  callback: Either[Throwable, UserRecordResult] => Unit): Unit =
+    Futures.addCallback(
+      listenableFuture,
+      new FutureCallback[UserRecordResult] {
+        override def onSuccess(result: UserRecordResult): Unit =
+          if (result.isSuccessful) callback(Right(result)) else callback(Left(sendFailedException(result)))
+
+        override def onFailure(t: Throwable): Unit = callback(Left(t))
+      }
+    )
 
   private def sendFailedException(result: UserRecordResult): RuntimeException = {
     val attemptCount = result.getAttempts.size
